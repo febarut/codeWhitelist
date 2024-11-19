@@ -15,6 +15,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.*;
 
@@ -27,10 +30,15 @@ public class Main extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         setupConfigWithCode();
-        getLogger().info("codeWhitelist açıldı!");
 
         Bukkit.getPluginManager().registerEvents(this, this);
+
+
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            getLogger().info("Doğrulama Kodu: " + serverCode + " - Saganetwork'ü tercih ettiğiniz için teşekkür ederiz!");
+        }, 20L * 60 * 15, 20L * 60 * 15);
     }
+
 
     @EventHandler
     public void onServerLoad(org.bukkit.event.server.ServerLoadEvent event) {
@@ -59,8 +67,25 @@ public class Main extends JavaPlugin implements Listener {
         }
 
         freezePlayer(player);
-        player.sendMessage(ChatColor.RED + "Komut: /kod <kod>");
+
+        player.sendTitle(
+                ChatColor.RED + "Kod Gerekli!",
+                ChatColor.YELLOW + "Panelinize giriş yapın ve konsoldaki kodu girin.", // Alt başlık
+                10,
+                100,
+                10
+        );
+
+        player.sendMessage(ChatColor.YELLOW + "Doğrulama kodu girene kadar donduruldunuz! Sunucuya ilk defa giriş sağlandığın için panelinizden konsol kısmından kodu alıp /kod <kod>  yazmanız gereklidir. Tek seferlik kod girilicektir tekrar istemicektir.");
+
+        TextComponent linkMessage = new TextComponent(">>> Doğrulama Rehberine Git <<<");
+        linkMessage.setColor(net.md_5.bungee.api.ChatColor.GREEN);
+        linkMessage.setBold(true);
+        linkMessage.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://minecraftdocs.mcsunucun.com/panel-ek-ozellikleri/nasil-kod-alirim"));
+
+        player.spigot().sendMessage(linkMessage);
     }
+
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
@@ -122,7 +147,7 @@ public class Main extends JavaPlugin implements Listener {
                 config.set("players", playerList);
                 saveConfig();
 
-                sender.sendMessage(ChatColor.GREEN + "Doğrulama başarılı! Hoş geldiniz.");
+                sender.sendMessage(ChatColor.GREEN + "Doğrulama başarılı artık özgürsünüz!");
             } else {
                 sender.sendMessage(ChatColor.RED + "Geçersiz kod.");
             }
@@ -134,13 +159,11 @@ public class Main extends JavaPlugin implements Listener {
     private void freezePlayer(Player player) {
         frozenPlayers.put(player.getUniqueId().toString(), true);
         player.setWalkSpeed(0f);
-        player.sendMessage(ChatColor.RED + "Doğrulama kodu girene kadar donduruldunuz! (Doğrulama kodunu almak için console'da 'Sunucu için doğrulama kodu:' mesajını arayabilirsiniz.)");
     }
 
     private void unfreezePlayer(Player player) {
         frozenPlayers.remove(player.getUniqueId().toString());
         player.setWalkSpeed(0.2f);
-        player.sendMessage(ChatColor.GREEN + "Artık özgürsünüz!");
     }
 
     private boolean isFrozen(Player player) {
