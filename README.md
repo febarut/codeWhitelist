@@ -4,9 +4,9 @@
 
 ### ✨ Özellikler
 - **Doğrulama Kodu Sistemi**: Sunucu her açıldığında bir doğrulama kodu oluşturulur ve sunucunun `config.yml` dosyasına kaydedilir.
-- **Sunucu Yüklemesi Tamamlandığında Kod Gösterimi**: Doğrulama kodu, sunucu tamamen oyuncuların giriş yapabilir duruma gelmesinden 5 saniye sonra konsola yazdırılır.
 - **IP Tabanlı Kayıt**: Oyuncular, doğrulama yaptıktan sonra IP adresleriyle birlikte kayıt edilir. Böylece bir sonraki girişlerinde tekrar kod girmelerine gerek kalmaz.
-- **Freeze Sistemi**: Doğrulama yapılmadan önce oyuncuların hareket etmesi, eşya kullanması, hasar vermesi veya alması engellenir.
+- - **Freeze Sistemi**: Doğrulama yapılmadan önce oyuncuların hareket etmesi, eşya kullanması, hasar vermesi veya alması engellenir.
+- **Kod Gösterimi**: Doğrulama kodu, sunucu tamamen oyuncuların giriş yapabilir duruma geldiğinde konsola yazdırılır.
 - **Esnek Yönetim**:
   - `config.yml` üzerinden IP kontrolü açılıp kapatılabilir.
   - Oyuncu doğrulama listesi kolayca düzenlenebilir.
