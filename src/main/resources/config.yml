@@ -1,0 +1,4 @@
+server-code: "" # Doğrulama Kodu
+players: [] # Oyuncu İsimleri:Ip Adresleri
+settings:
+  ip-check: true # IP kontrolü (Açık olması önerilir.)
