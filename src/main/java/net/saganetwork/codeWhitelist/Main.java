@@ -14,17 +14,17 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
-
 import java.util.*;
 
 public class Main extends JavaPlugin implements Listener {
-
+    private final Map<UUID, ItemStack[]> storedInventories = new HashMap<>(); // Envanterleri geçici olarak saklamak için
     private final Map<String, Boolean> frozenPlayers = new HashMap<>();
     private String serverCode;
+    private VersionChecker versionChecker;
 
     @Override
     public void onEnable() {
@@ -34,9 +34,15 @@ public class Main extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(this, this);
 
 
+        String versionCheckUrl = "https://api.mcsunucun.com/CodeWhitelist/check.php";
+        VersionChecker versionChecker = new VersionChecker(this, versionCheckUrl);
+        Bukkit.getScheduler().runTaskAsynchronously(this, versionChecker::checkVersion);
+
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             getLogger().info("Doğrulama Kodu: " + serverCode + " - Saganetwork'ü tercih ettiğiniz için teşekkür ederiz!");
         }, 20L * 60 * 15, 20L * 60 * 15);
+
+        getLogger().info("CodeWhitelist eklentisi başarıyla etkinleştirildi!");
     }
 
 
@@ -67,6 +73,7 @@ public class Main extends JavaPlugin implements Listener {
         }
 
         freezePlayer(player);
+        storeAndClearInventory(player);
 
         player.sendTitle(
                 ChatColor.RED + "Kod Gerekli!",
@@ -76,7 +83,7 @@ public class Main extends JavaPlugin implements Listener {
                 10
         );
 
-        player.sendMessage(ChatColor.YELLOW + "Doğrulama kodu girene kadar donduruldunuz! Sunucuya ilk defa giriş sağlandığın için panelinizden konsol kısmından kodu alıp /kod <kod>  yazmanız gereklidir. Tek seferlik kod girilicektir tekrar istemicektir.");
+        player.sendMessage(ChatColor.YELLOW + "Doğrulama kodu girene kadar donduruldunuz! Sunucuya ilk defa giriş sağlandığın için panelinizden konsol kısmından kodu alıp /kod <kod> yazmanız gereklidir. Tek seferlik kod girilicektir tekrar istemicektir.");
 
         TextComponent linkMessage = new TextComponent(">>> Doğrulama Rehberine Git <<<");
         linkMessage.setColor(net.md_5.bungee.api.ChatColor.GREEN);
@@ -85,7 +92,6 @@ public class Main extends JavaPlugin implements Listener {
 
         player.spigot().sendMessage(linkMessage);
     }
-
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
@@ -139,6 +145,7 @@ public class Main extends JavaPlugin implements Listener {
 
             if (args[0].equals(serverCode)) {
                 unfreezePlayer(player);
+                restoreInventory(player);
 
                 String playerIp = player.getAddress().getAddress().getHostAddress();
                 FileConfiguration config = getConfig();
@@ -168,6 +175,23 @@ public class Main extends JavaPlugin implements Listener {
 
     private boolean isFrozen(Player player) {
         return frozenPlayers.getOrDefault(player.getUniqueId().toString(), false);
+    }
+
+    private void storeAndClearInventory(Player player) {
+        UUID playerId = player.getUniqueId();
+
+        storedInventories.put(playerId, player.getInventory().getContents());
+
+        player.getInventory().clear();
+    }
+
+    private void restoreInventory(Player player) {
+        UUID playerId = player.getUniqueId();
+
+        if (storedInventories.containsKey(playerId)) {
+            player.getInventory().setContents(storedInventories.get(playerId));
+            storedInventories.remove(playerId);
+        }
     }
 
     private void setupConfigWithCode() {
@@ -201,3 +225,4 @@ public class Main extends JavaPlugin implements Listener {
         return code.toString();
     }
 }
+
