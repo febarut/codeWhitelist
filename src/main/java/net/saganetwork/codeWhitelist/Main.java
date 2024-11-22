@@ -1,7 +1,6 @@
 package net.saganetwork.codeWhitelist;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -16,46 +15,47 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
 import java.util.*;
 
 public class Main extends JavaPlugin implements Listener {
-    private final Map<UUID, ItemStack[]> storedInventories = new HashMap<>(); // Envanterleri geçici olarak saklamak için
+    private final Map<UUID, ItemStack[]> storedInventories = new HashMap<>();
     private final Map<String, Boolean> frozenPlayers = new HashMap<>();
     private String serverCode;
     private VersionChecker versionChecker;
+    private LanguageManager languageManager;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        saveDefaultResources();
         setupConfigWithCode();
+
+        languageManager = new LanguageManager(this);
 
         Bukkit.getPluginManager().registerEvents(this, this);
 
-
         String versionCheckUrl = "https://api.mcsunucun.com/CodeWhitelist/check.php";
-        VersionChecker versionChecker = new VersionChecker(this, versionCheckUrl);
+        versionChecker = new VersionChecker(this, versionCheckUrl);
         Bukkit.getScheduler().runTaskAsynchronously(this, versionChecker::checkVersion);
 
         Bukkit.getScheduler().runTaskTimer(this, () -> {
-            getLogger().info("Doğrulama Kodu: " + serverCode + " - Saganetwork'ü tercih ettiğiniz için teşekkür ederiz!");
+            getLogger().info(languageManager.getMessage("verification_code_message" + " - Saganetwork'ü tercih ettiğiniz için teşekkür ederiz!")
+                    .replace("{code}", serverCode));
         }, 20L * 60 * 15, 20L * 60 * 15);
 
-        getLogger().info("CodeWhitelist eklentisi başarıyla etkinleştirildi!");
+        getLogger().info(languageManager.getMessage("plugin_enabled"));
     }
-
 
     @EventHandler
     public void onServerLoad(org.bukkit.event.server.ServerLoadEvent event) {
         Bukkit.getScheduler().runTaskLater(this, () -> {
-            getLogger().info("Sunucu için doğrulama kodu: " + serverCode);
+            getLogger().info(languageManager.getMessage("server_code_console").replace("{code}", serverCode));
         }, 20L * 3);
     }
 
     @Override
     public void onDisable() {
-        getLogger().info("codeWhitelist kapatıldı!");
+        getLogger().info(languageManager.getMessage("plugin_disabled"));
     }
 
     @EventHandler
@@ -68,7 +68,7 @@ public class Main extends JavaPlugin implements Listener {
         boolean isVerified = config.getStringList("players").contains(player.getName() + ":" + playerIp);
 
         if (ipCheckEnabled && isVerified) {
-            player.sendMessage(ChatColor.GREEN + "IP adresiniz eşleşti, kod girmeden oynayabilirsiniz.");
+            player.sendMessage(languageManager.getMessage("ip_verified"));
             return;
         }
 
@@ -76,21 +76,17 @@ public class Main extends JavaPlugin implements Listener {
         storeAndClearInventory(player);
 
         player.sendTitle(
-                ChatColor.RED + "Kod Gerekli!",
-                ChatColor.YELLOW + "Panelinize giriş yapın ve konsoldaki kodu girin.", // Alt başlık
-                10,
-                100,
-                10
+                languageManager.getMessage("title_required_code"),
+                languageManager.getMessage("subtitle_required_code"),
+                10, 100, 10
         );
 
-        player.sendMessage(ChatColor.YELLOW + "Doğrulama kodu girene kadar donduruldunuz! Sunucuya ilk defa giriş sağlandığın için panelinizden konsol kısmından kodu alıp /kod <kod> yazmanız gereklidir. Tek seferlik kod girilicektir tekrar istemicektir.");
+        player.sendMessage(languageManager.getMessage("frozen_message"));
 
-        TextComponent linkMessage = new TextComponent(">>> Doğrulama Rehberine Git <<<");
-        linkMessage.setColor(net.md_5.bungee.api.ChatColor.GREEN);
-        linkMessage.setBold(true);
-        linkMessage.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://minecraftdocs.mcsunucun.com/panel-ek-ozellikleri/nasil-kod-alirim"));
-
-        player.spigot().sendMessage(linkMessage);
+        player.spigot().sendMessage(languageManager.createClickableMessage(
+                languageManager.getMessage("verification_guide_text"),
+                "https://minecraftdocs.mcsunucun.com/panel-ek-ozellikleri/nasil-kod-alirim"
+        ));
     }
 
     @EventHandler
@@ -126,20 +122,33 @@ public class Main extends JavaPlugin implements Listener {
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player player && isFrozen(player)) {
             event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "Kod girmeden birisine vuramazsınız! (Doğrulama kodunu almak için console'da 'Sunucu için doğrulama kodu:' mesajını arayabilirsiniz.)");
+            player.sendMessage(languageManager.getMessage("cannot_attack"));
         }
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (label.equalsIgnoreCase("kod")) {
-            if (args.length != 1) {
-                sender.sendMessage(ChatColor.RED + "Kullanım: /kod <kod>");
+        if (label.equalsIgnoreCase("kod") || label.equalsIgnoreCase("code")) {
+            if (args.length < 1) {
+                sender.sendMessage(languageManager.getMessage("usage_command")); // "Kullanım: /kod <kod>"
+                return true;
+            }
+
+            if (args[0].equalsIgnoreCase("al")) {
+                if (sender instanceof Player player) {
+                    if (!player.isOp()) {
+                        player.sendMessage(languageManager.getMessage("no_permission"));
+                        return true;
+                    }
+                    player.sendMessage(languageManager.getMessage("server_code_console").replace("{code}", serverCode));
+                } else {
+                    sender.sendMessage(languageManager.getMessage("server_code_console").replace("{code}", serverCode));
+                }
                 return true;
             }
 
             if (!(sender instanceof Player player)) {
-                sender.sendMessage(ChatColor.RED + "Bu komutu yalnızca oyuncular kullanabilir.");
+                sender.sendMessage(languageManager.getMessage("command_only_players"));
                 return true;
             }
 
@@ -154,14 +163,16 @@ public class Main extends JavaPlugin implements Listener {
                 config.set("players", playerList);
                 saveConfig();
 
-                sender.sendMessage(ChatColor.GREEN + "Doğrulama başarılı artık özgürsünüz!");
+                sender.sendMessage(languageManager.getMessage("verification_success"));
             } else {
-                sender.sendMessage(ChatColor.RED + "Geçersiz kod.");
+                sender.sendMessage(languageManager.getMessage("invalid_code"));
             }
             return true;
         }
+
         return false;
     }
+
 
     private void freezePlayer(Player player) {
         frozenPlayers.put(player.getUniqueId().toString(), true);
@@ -215,6 +226,14 @@ public class Main extends JavaPlugin implements Listener {
         saveConfig();
     }
 
+    private void saveDefaultResources() {
+        saveResource("translate/en.yml", false);
+        saveResource("translate/tr.yml", false);
+
+        getLogger().info("Varsayılan dil dosyaları oluşturuldu.");
+    }
+
+
     private String generateRandomCode() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder code = new StringBuilder();
@@ -224,5 +243,5 @@ public class Main extends JavaPlugin implements Listener {
         }
         return code.toString();
     }
-}
 
+}

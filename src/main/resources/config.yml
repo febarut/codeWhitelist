@@ -1,4 +1,8 @@
-server-code: "" # Doğrulama Kodu
-players: [] # Oyuncu İsimleri:Ip Adresleri
+# Yapılandırma dosyaları // Configuration files
+server-code: "" # Verification Code // Doğrulama Kodu
+players: [] # Player Names:IP Address // Oyuncu İsimleri:Ip Adresleri
 settings:
-  ip-check: true # IP kontrolü (Açık olması önerilir.)
+  ip-check: true # IP Control () // IP kontrolü (Açık olması önerilir.)
+
+# Çeviri Dosyaları // Translate Files
+language: tr

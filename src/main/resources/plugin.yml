@@ -1,9 +1,10 @@
 name: codeWhitelist
-version: 1.2
+version: 1.3
 main: net.saganetwork.codeWhitelist.Main
 description: Oyuncular için doğrulama kodu ve whitelist sistemi.
 author: Saganetwork
 commands:
   kod:
-    description: Doğrulama kodunu girerek freeze durumundan kurtulun.
+    description: Code verification system.
     usage: /kod <kod>
+    aliases: ["code"]
