@@ -32,7 +32,6 @@ public class LanguageManager {
 
         FileConfiguration langConfig = YamlConfiguration.loadConfiguration(langFile);
 
-        // Mesajları yükle
         if (langConfig.contains("messages")) {
             for (String key : langConfig.getConfigurationSection("messages").getKeys(false)) {
                 messages.put(key, langConfig.getString("messages." + key, "Mesaj bulunamadı: " + key));

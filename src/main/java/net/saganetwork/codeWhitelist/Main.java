@@ -10,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -39,7 +40,7 @@ public class Main extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskAsynchronously(this, versionChecker::checkVersion);
 
         Bukkit.getScheduler().runTaskTimer(this, () -> {
-            getLogger().info(languageManager.getMessage("verification_code_message" + " - Saganetwork'ü tercih ettiğiniz için teşekkür ederiz!")
+            getLogger().info(languageManager.getMessage("verification_code_message")
                     .replace("{code}", serverCode));
         }, 20L * 60 * 15, 20L * 60 * 15);
 
@@ -69,6 +70,8 @@ public class Main extends JavaPlugin implements Listener {
 
         if (ipCheckEnabled && isVerified) {
             player.sendMessage(languageManager.getMessage("ip_verified"));
+            getLogger().info(languageManager.getMessage("server_ip_verified")
+                    .replace("{playerip}", player.getAddress().getAddress().getHostAddress()));
             return;
         }
 
@@ -82,6 +85,8 @@ public class Main extends JavaPlugin implements Listener {
         );
 
         player.sendMessage(languageManager.getMessage("frozen_message"));
+        getLogger().info(languageManager.getMessage("server_not_verified")
+                .replace("{playerip}", player.getAddress().getAddress().getHostAddress()));
 
         player.spigot().sendMessage(languageManager.createClickableMessage(
                 languageManager.getMessage("verification_guide_text"),
@@ -126,11 +131,29 @@ public class Main extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
+        Player player = event.getPlayer();
+        String command = event.getMessage().toLowerCase();
+
+        if (!isFrozen(player)) {
+            return;
+        }
+
+        if (command.startsWith("/kod ") || command.startsWith("/code ")) {
+            return;
+        }
+
+        event.setCancelled(true);
+        player.sendMessage(languageManager.getMessage("command_blocked"));
+    }
+
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (label.equalsIgnoreCase("kod") || label.equalsIgnoreCase("code")) {
             if (args.length < 1) {
-                sender.sendMessage(languageManager.getMessage("usage_command")); // "Kullanım: /kod <kod>"
+                sender.sendMessage(languageManager.getMessage("usage_command"));
                 return true;
             }
 
@@ -140,6 +163,12 @@ public class Main extends JavaPlugin implements Listener {
                         player.sendMessage(languageManager.getMessage("no_permission"));
                         return true;
                     }
+
+                    if (isFrozen(player)) {
+                        player.sendMessage(languageManager.getMessage("command_blocked"));
+                        return true;
+                    }
+
                     player.sendMessage(languageManager.getMessage("server_code_console").replace("{code}", serverCode));
                 } else {
                     sender.sendMessage(languageManager.getMessage("server_code_console").replace("{code}", serverCode));
