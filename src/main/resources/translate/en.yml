@@ -17,3 +17,5 @@ messages:
   server_code_console: "&6Server verification code: {code}"
   no_permission: "&cYou don't have permission to perform this action!"
   command_blocked: "&cYou cannot use commands without verifying!"
+  hostname_not_allowed: "This server can only be accessed via a certain address."
+  hostname_rejected: "{player} tried to join the server using {hostname}, but was denied."

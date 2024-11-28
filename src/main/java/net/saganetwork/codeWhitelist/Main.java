@@ -10,10 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.*;
@@ -60,6 +57,25 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     @EventHandler
+    public void onPreLogin(PlayerLoginEvent event) {
+        String playerHostname = event.getHostname();
+        String playerName = event.getPlayer().getName();
+
+        FileConfiguration config = getConfig();
+        boolean allowedLoginIPEnabled = config.getBoolean("settings.allowed-login-ip", false);
+        String allowedLoginHostname = config.getString("settings.login-ip", "play.xxx.com");
+
+        if (allowedLoginIPEnabled && !playerHostname.startsWith(allowedLoginHostname)) {
+            event.disallow(PlayerLoginEvent.Result.KICK_OTHER,
+                    languageManager.getMessage("hostname_not_allowed"));
+            getLogger().info(languageManager.getMessage("hostname_rejected")
+                    .replace("{hostname}", playerHostname)
+                    .replace("{player}", playerName));
+            return;
+        }
+    }
+
+    @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerIp = player.getAddress().getAddress().getHostAddress();
@@ -68,10 +84,11 @@ public class Main extends JavaPlugin implements Listener {
         boolean ipCheckEnabled = config.getBoolean("settings.ip-check", true);
         boolean isVerified = config.getStringList("players").contains(player.getName() + ":" + playerIp);
 
+
         if (ipCheckEnabled && isVerified) {
             player.sendMessage(languageManager.getMessage("ip_verified"));
             getLogger().info(languageManager.getMessage("server_ip_verified")
-                    .replace("{playerip}", player.getAddress().getAddress().getHostAddress()));
+                    .replace("{playerip}", playerIp));
             return;
         }
 
@@ -86,7 +103,7 @@ public class Main extends JavaPlugin implements Listener {
 
         player.sendMessage(languageManager.getMessage("frozen_message"));
         getLogger().info(languageManager.getMessage("server_not_verified")
-                .replace("{playerip}", player.getAddress().getAddress().getHostAddress()));
+                .replace("{playerip}", playerIp));
 
         player.spigot().sendMessage(languageManager.createClickableMessage(
                 languageManager.getMessage("verification_guide_text"),

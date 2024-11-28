@@ -2,7 +2,9 @@
 server-code: "" # Verification Code // Doğrulama Kodu
 players: [] # Player Names:IP Address // Oyuncu İsimleri:Ip Adresleri
 settings:
-  ip-check: true # IP Control () // IP kontrolü (Açık olması önerilir.)
+  ip-check: true # IP Control // IP kontrolü (Açık olması önerilir.)
+  allowed-login-ip: false # IP üzerinden giriş kontrolü açık/kapalı
+  login-ip: "play.xxx.com" # İzin verilen IP üzerinden giriş yapılabilir.
 
 # Çeviri Dosyaları // Translate Files
 language: tr

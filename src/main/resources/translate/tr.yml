@@ -17,3 +17,5 @@ messages:
   server_code_console: "&6Sunucu için doğrulama kodu: {code}"
   no_permission: "&cBu işlemi yapmaya yetkiniz yok!"
   command_blocked: "&cDoğrulama yapmadan komut kullanamazsınız!"
+  hostname_not_allowed: "Bu sunucuya sadece belirli adres üzerinden giriş yapılabilir."
+  hostname_rejected: "{player} ({hostname}) sunucuya giriş yapmayı denedi ancak izin verilmedi."
