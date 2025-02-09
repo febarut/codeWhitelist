@@ -16,7 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.*;
 
 public class Main extends JavaPlugin implements Listener {
-    private final Map<UUID, ItemStack[]> storedInventories = new HashMap<>();
+    private final Map<String, ItemStack[]> storedInventories = new HashMap<>();
     private final Map<String, Boolean> frozenPlayers = new HashMap<>();
     private String serverCode;
     private VersionChecker versionChecker;
@@ -110,6 +110,20 @@ public class Main extends JavaPlugin implements Listener {
                 "https://minecraftdocs.mcsunucun.com/panel-ek-ozellikleri/nasil-kod-alirim"
         ));
     }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        String playerName = player.getName();
+
+        if (storedInventories.containsKey(playerName)) {
+            player.getInventory().setContents(storedInventories.get(playerName));
+            storedInventories.remove(playerName);
+        }
+
+        frozenPlayers.remove(playerName);
+    }
+
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
@@ -235,19 +249,22 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     private void storeAndClearInventory(Player player) {
-        UUID playerId = player.getUniqueId();
+        String playerName = player.getName();
 
-        storedInventories.put(playerId, player.getInventory().getContents());
+        if (storedInventories.containsKey(playerName)) {
+            return;
+        }
 
+        storedInventories.put(playerName, player.getInventory().getContents());
         player.getInventory().clear();
     }
 
-    private void restoreInventory(Player player) {
-        UUID playerId = player.getUniqueId();
 
-        if (storedInventories.containsKey(playerId)) {
-            player.getInventory().setContents(storedInventories.get(playerId));
-            storedInventories.remove(playerId);
+    private void restoreInventory(Player player) {
+        String playerName = player.getName();
+        if (storedInventories.containsKey(playerName)) {
+            player.getInventory().setContents(storedInventories.get(playerName));
+            storedInventories.remove(playerName);
         }
     }
 
